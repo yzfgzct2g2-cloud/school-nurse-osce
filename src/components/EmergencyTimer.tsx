@@ -1,5 +1,5 @@
 // ============================================================
-// 校護緊急救護情境評分表 - 計時器
+// 校護緊急救護情境評分表 - 計時器 v1.1.0
 // 匯出：useCountdown（倒數邏輯 hook）、EmergencyTimer（顯示元件）
 // ============================================================
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -10,6 +10,16 @@ export const DEFAULT_TEST_SECONDS = 12 * 60;
 /** 最後幾秒進入警示狀態 */
 export const WARNING_SECONDS = 60;
 
+/** 計時預設選項 */
+export const TIMER_PRESETS: { label: string; seconds: number }[] = [
+  { label: '3分', seconds: 3 * 60 },
+  { label: '5分', seconds: 5 * 60 },
+  { label: '10分', seconds: 10 * 60 },
+  { label: '12分', seconds: 12 * 60 },
+  { label: '15分', seconds: 15 * 60 },
+  { label: '30分', seconds: 30 * 60 },
+];
+
 // ------------------------------------------------------------
 // 倒數邏輯 hook
 // ------------------------------------------------------------
@@ -18,7 +28,8 @@ export interface CountdownApi {
   secondsLeft: number;
   usedSeconds: number;
   state: TimerState;
-  start: () => void;
+  /** 開始計時（可帶入自訂秒數，不帶則沿用上次設定） */
+  start: (seconds?: number) => void;
   pause: () => void;
   resume: () => void;
   finish: () => void;
@@ -52,8 +63,10 @@ export function useCountdown(
     }
   }, [secondsLeft, state]);
 
-  const start = useCallback(() => {
-    setSecondsLeft(totalSeconds);
+  const start = useCallback((seconds?: number) => {
+    const t = seconds !== undefined ? seconds : totalSeconds;
+    setTotalSeconds(t);
+    setSecondsLeft(t);
     setState('running');
   }, [totalSeconds]);
 
@@ -118,27 +131,21 @@ function beep(freq = 880, durationMs = 250): void {
       try {
         osc.stop();
         void ctx.close();
-      } catch {
-        /* 忽略 */
-      }
+      } catch { /* 忽略 */ }
     }, durationMs);
-  } catch {
-    /* 忽略：部分瀏覽器或未經使用者互動時不支援 */
-  }
+  } catch { /* 忽略：部分瀏覽器或未經使用者互動時不支援 */ }
 }
 
 function vibrate(pattern: number | number[]): void {
   try {
     navigator.vibrate?.(pattern);
-  } catch {
-    /* 忽略：桌機或不支援的瀏覽器 */
-  }
+  } catch { /* 忽略：桌機或不支援的瀏覽器 */ }
 }
 
 // ------------------------------------------------------------
 // 顯示元件
 // ------------------------------------------------------------
-function formatTime(totalSeconds: number): string {
+export function formatTime(totalSeconds: number): string {
   const safe = Math.max(0, totalSeconds);
   const m = Math.floor(safe / 60);
   const s = safe % 60;
@@ -149,9 +156,10 @@ interface EmergencyTimerProps {
   secondsLeft: number;
   totalSeconds: number;
   state: TimerState;
+  compact?: boolean;
 }
 
-export function EmergencyTimer({ secondsLeft, state }: EmergencyTimerProps) {
+export function EmergencyTimer({ secondsLeft, state, compact = false }: EmergencyTimerProps) {
   const inWarning =
     secondsLeft <= WARNING_SECONDS &&
     secondsLeft > 0 &&
@@ -191,6 +199,7 @@ export function EmergencyTimer({ secondsLeft, state }: EmergencyTimerProps) {
 
   const cls = [
     'timer',
+    compact ? 'timer--compact' : '',
     inWarning ? 'timer--warning' : '',
     state === 'finished' ? 'timer--finished' : '',
   ]
@@ -200,9 +209,11 @@ export function EmergencyTimer({ secondsLeft, state }: EmergencyTimerProps) {
   return (
     <div className={cls} role="timer" aria-live="polite">
       <span className="timer__time">{formatTime(secondsLeft)}</span>
-      <span className="timer__state">
-        {inWarning ? '最後 1 分鐘！' : stateLabel[state]}
-      </span>
+      {!compact && (
+        <span className="timer__state">
+          {inWarning ? '最後 1 分鐘！' : stateLabel[state]}
+        </span>
+      )}
     </div>
   );
 }

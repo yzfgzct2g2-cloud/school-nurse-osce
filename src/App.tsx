@@ -1,9 +1,9 @@
 // ============================================================
-// 校護緊急救護情境評分表 - App 根元件
+// 校護緊急救護情境評分表 - App 根元件 v1.1.0
 // ============================================================
 import { useCallback, useEffect, useState } from 'react';
 import { EmergencyScoreSheet } from './components/EmergencyScoreSheet';
-import { EmergencyScoreHistory } from './components/EmergencyScoreHistory';
+import { EmergencyScoreHistory, APP_VERSION, APP_UPDATE } from './components/EmergencyScoreHistory';
 import type { ScoreRecord } from './types/emergencyScoring';
 import './App.css';
 
@@ -26,16 +26,12 @@ export default function App() {
   const [view, setView] = useState<View>('sheet');
   const [records, setRecords] = useState<ScoreRecord[]>(() => loadRecords());
 
-  // 同步寫入 localStorage
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-    } catch {
-      /* 忽略寫入失敗（如隱私模式） */
-    }
+    } catch { /* 忽略寫入失敗（如隱私模式） */ }
   }, [records]);
 
-  // 以 id upsert：新測驗加入最前，編輯備註則就地更新
   const saveRecord = useCallback((record: ScoreRecord) => {
     setRecords((prev) => {
       const idx = prev.findIndex((r) => r.id === record.id);
@@ -75,6 +71,10 @@ export default function App() {
               <span className="tab__count">{records.length}</span>
             )}
           </button>
+        </div>
+        <div className="appnav__version">
+          <span>{APP_VERSION}</span>
+          <span className="appnav__update">Last Update {APP_UPDATE}</span>
         </div>
       </nav>
 

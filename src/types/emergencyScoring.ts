@@ -30,6 +30,16 @@ export interface ScenarioStep {
   id: string;
   /** 步驟說明文字 */
   text: string;
+  /** 重大缺失：若漏做則列入 criticalMissCount */
+  critical?: boolean;
+  /** 所屬評估階段（如 primary、secondary、special） */
+  phase?: string;
+  /** 顯示排序提示 */
+  order?: number;
+  /** 步驟補充說明 */
+  description?: string;
+  /** 預設狀態（未設定則為「未操作」） */
+  defaultStatus?: StepStatus;
 }
 
 /** 一個大項（一張卡片），包含多個步驟 */
@@ -85,6 +95,8 @@ export interface ScoreSummary {
   subStandardCount: number;
   errorCount: number;
   notDoneCount: number;
+  /** 重大缺失步驟數（critical:true 且非「標準」） */
+  criticalMissCount: number;
   /** 完成率（0~1），預設為「標準步驟數 / 總步驟數」 */
   completionRate: number;
   grade: Grade;
@@ -106,6 +118,8 @@ export interface ScoreRecord {
   subStandardCount: number;
   errorCount: number;
   notDoneCount: number;
+  /** 重大缺失步驟數 */
+  criticalMissCount: number;
   /** 完成率（0~1） */
   completionRate: number;
   /** 使用時間（秒） */

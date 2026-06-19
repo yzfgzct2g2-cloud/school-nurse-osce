@@ -1,5 +1,5 @@
 // ============================================================
-// 校護緊急救護情境評分表 - 計分與分級邏輯
+// 校護緊急救護情境評分表 - 計分與分級邏輯 v1.1.0
 // ============================================================
 import type {
   AnswerMap,
@@ -12,7 +12,6 @@ import type {
 
 // ------------------------------------------------------------
 // ★★★ 通過標準設定區塊（非程式人員亦可在此調整）★★★
-// 調整下列數值即可改變大項評級與整體分級的判定標準。
 // ------------------------------------------------------------
 export const SCORING_CONFIG = {
   /**
@@ -20,24 +19,22 @@ export const SCORING_CONFIG = {
    *   錯誤步驟數 >= sectionErrorThreshold      → 該大項「錯誤」
    *   錯誤步驟數 >= sectionSubStandardThreshold → 該大項「不標準」
    *   其餘                                      → 該大項「標準」
-   *
-   * 預設：錯 1 項 = 不標準，錯 2 項（含）以上 = 錯誤。
    */
   sectionSubStandardThreshold: 1,
   sectionErrorThreshold: 2,
 
   /**
-   * 整體分級門檻。
-   * 由上而下逐一比對，第一個全部符合的等級即為結果。
-   * - minCompletion：完成率下限（完成率 = 標準步驟數 / 總步驟數）
-   * - maxErrorSteps：允許的「錯誤」狀態步驟數上限
-   * - maxErrorSections：允許被評為「錯誤」的大項數上限
+   * 整體分級：依「標準率」與「重大缺失數」判定（由上而下，先符合者優先）
+   *
+   * 精熟     ：標準率 >= 90% 且 重大缺失 = 0
+   * 普通     ：標準率 >= 75% 且 重大缺失 <= 1
+   * 不精熟   ：標準率 >= 60% 或 重大缺失 = 2（且未達上面等級）
+   * 完全不熟 ：標準率 < 60% 或 重大缺失 >= 3
    */
   grade: {
-    精熟: { minCompletion: 0.9, maxErrorSteps: 0, maxErrorSections: 0 },
-    普通: { minCompletion: 0.75, maxErrorSteps: 2, maxErrorSections: 1 },
-    不精熟: { minCompletion: 0.5, maxErrorSteps: 5, maxErrorSections: 3 },
-    // 未達「不精熟」門檻者一律為「完全不熟」
+    精熟: { minCompletion: 0.9, maxCriticalMiss: 0 },
+    普通: { minCompletion: 0.75, maxCriticalMiss: 1 },
+    不精熟: { minCompletion: 0.6, maxCriticalMiss: 2 },
   },
 
   /** 視為通過的分級 */
@@ -59,35 +56,29 @@ function gradeSection(errorSteps: number): SectionGrade {
   return '標準';
 }
 
-/** 依整體統計判定整體分級 */
-function gradeOverall(
-  completionRate: number,
-  errorSteps: number,
-  errorSections: number,
-): Grade {
-  const g = SCORING_CONFIG.grade;
+/**
+ * 整體分級：
+ * - 完全不熟優先（rate < 60% 或 criticalMiss >= 3）
+ * - 再依精熟→普通→不精熟→完全不熟排序
+ */
+function gradeOverall(completionRate: number, criticalMiss: number): Grade {
+  // 完全不熟：任一條件成立即降至最低等級
+  if (completionRate < SCORING_CONFIG.grade.不精熟.minCompletion || criticalMiss > SCORING_CONFIG.grade.不精熟.maxCriticalMiss) {
+    return '完全不熟';
+  }
   if (
-    completionRate >= g.精熟.minCompletion &&
-    errorSteps <= g.精熟.maxErrorSteps &&
-    errorSections <= g.精熟.maxErrorSections
+    completionRate >= SCORING_CONFIG.grade.精熟.minCompletion &&
+    criticalMiss <= SCORING_CONFIG.grade.精熟.maxCriticalMiss
   ) {
     return '精熟';
   }
   if (
-    completionRate >= g.普通.minCompletion &&
-    errorSteps <= g.普通.maxErrorSteps &&
-    errorSections <= g.普通.maxErrorSections
+    completionRate >= SCORING_CONFIG.grade.普通.minCompletion &&
+    criticalMiss <= SCORING_CONFIG.grade.普通.maxCriticalMiss
   ) {
     return '普通';
   }
-  if (
-    completionRate >= g.不精熟.minCompletion &&
-    errorSteps <= g.不精熟.maxErrorSteps &&
-    errorSections <= g.不精熟.maxErrorSections
-  ) {
-    return '不精熟';
-  }
-  return '完全不熟';
+  return '不精熟';
 }
 
 /** 是否通過 */
@@ -107,15 +98,16 @@ export function computeScore(scenario: Scenario, answers: AnswerMap): ScoreSumma
   let subStandardCount = 0;
   let errorCount = 0;
   let notDoneCount = 0;
+  let criticalMissCount = 0;
 
-  for (const section of scenario.sections) {
+  for (const sec of scenario.sections) {
     let s = 0;
     let sub = 0;
     let err = 0;
     let nd = 0;
 
-    for (const step of section.steps) {
-      const status = answers[stepKey(section.id, step.id)] ?? '未操作';
+    for (const step of sec.steps) {
+      const status = answers[stepKey(sec.id, step.id)] ?? '未操作';
       switch (status) {
         case '標準':
           s += 1;
@@ -129,12 +121,16 @@ export function computeScore(scenario: Scenario, answers: AnswerMap): ScoreSumma
         default:
           nd += 1;
       }
+      // 重大缺失：critical 步驟且非「標準」
+      if (step.critical && status !== '標準') {
+        criticalMissCount += 1;
+      }
     }
 
-    const sectionTotal = section.steps.length;
+    const sectionTotal = sec.steps.length;
     sections.push({
-      sectionId: section.id,
-      title: section.title,
+      sectionId: sec.id,
+      title: sec.title,
       total: sectionTotal,
       standard: s,
       subStandard: sub,
@@ -151,8 +147,7 @@ export function computeScore(scenario: Scenario, answers: AnswerMap): ScoreSumma
   }
 
   const completionRate = totalSteps === 0 ? 0 : standardCount / totalSteps;
-  const errorSections = sections.filter((sec) => sec.grade === '錯誤').length;
-  const grade = gradeOverall(completionRate, errorCount, errorSections);
+  const grade = gradeOverall(completionRate, criticalMissCount);
 
   return {
     totalSteps,
@@ -160,6 +155,7 @@ export function computeScore(scenario: Scenario, answers: AnswerMap): ScoreSumma
     subStandardCount,
     errorCount,
     notDoneCount,
+    criticalMissCount,
     completionRate,
     grade,
     passed: isPassing(grade),
