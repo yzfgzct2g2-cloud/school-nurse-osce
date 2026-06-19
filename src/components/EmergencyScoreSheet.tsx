@@ -67,25 +67,75 @@ export function EmergencyScoreSheet({ onSaveRecord }: EmergencyScoreSheetProps) 
   // 工具列自動收折（捲動偵測）
   const [topbarHidden, setTopbarHidden] = useState(false);
   const [scorebarCollapsed, setScorebarCollapsed] = useState(false);
+  // 使用 ref 追蹤「當下狀態」，避免 debounce closure 讀到舊的 state
+  const topbarHiddenRef = useRef(false);
+  const scorebarCollapsedRef = useRef(false);
   const lastScrollYRef = useRef(0);
+  const scrollDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const onScroll = () => {
+    const THRESHOLD = 20;      // 至少位移 20px 才判定方向
+    const DEBOUNCE_MS = 200;   // 防抖延遲
+
+    const handleScroll = () => {
       const y = window.scrollY;
-      const delta = y - lastScrollYRef.current;
-      if (y < 60) {
-        setTopbarHidden(false);
-      } else if (delta > 12) {
-        setTopbarHidden(true);
-        setScorebarCollapsed(true);
-      } else if (delta < -12) {
-        setTopbarHidden(false);
-        setScorebarCollapsed(false);
+
+      // 到達頂部：強制展開
+      const isAtTop = y <= 20;
+      // 到達底部：不切換狀態，避免彈跳
+      const isAtBottom =
+        window.innerHeight + y >= document.body.offsetHeight - 10;
+
+      if (isAtTop) {
+        if (topbarHiddenRef.current) {
+          topbarHiddenRef.current = false;
+          setTopbarHidden(false);
+        }
+        if (scorebarCollapsedRef.current) {
+          scorebarCollapsedRef.current = false;
+          setScorebarCollapsed(false);
+        }
+        lastScrollYRef.current = y;
+        return;
       }
+
+      if (isAtBottom) {
+        // 停在底部時不更新 lastScrollY，防止反向 delta 誤觸發
+        return;
+      }
+
+      const delta = y - lastScrollYRef.current;
       lastScrollYRef.current = y;
+
+      // 未超過閾值，不觸發
+      if (Math.abs(delta) < THRESHOLD) return;
+
+      // 清除前一個 debounce
+      if (scrollDebounceRef.current !== null) {
+        clearTimeout(scrollDebounceRef.current);
+      }
+
+      const newHidden = delta > 0; // 向下 → 收折；向上 → 展開
+
+      scrollDebounceRef.current = setTimeout(() => {
+        if (newHidden !== topbarHiddenRef.current) {
+          topbarHiddenRef.current = newHidden;
+          setTopbarHidden(newHidden);
+        }
+        if (newHidden !== scorebarCollapsedRef.current) {
+          scorebarCollapsedRef.current = newHidden;
+          setScorebarCollapsed(newHidden);
+        }
+      }, DEBOUNCE_MS);
     };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollDebounceRef.current !== null) {
+        clearTimeout(scrollDebounceRef.current);
+      }
+    };
   }, []);
 
   const finalizedRef = useRef(false);
@@ -259,7 +309,12 @@ export function EmergencyScoreSheet({ onSaveRecord }: EmergencyScoreSheetProps) 
           <span className="topbar-mini__scenario">{scenario.name}</span>
           <button
             className="btn btn--mini"
-            onClick={() => { setTopbarHidden(false); setScorebarCollapsed(false); }}
+            onClick={() => {
+            topbarHiddenRef.current = false;
+            scorebarCollapsedRef.current = false;
+            setTopbarHidden(false);
+            setScorebarCollapsed(false);
+          }}
           >
             ▾ 展開工具列
           </button>
@@ -553,7 +608,11 @@ export function EmergencyScoreSheet({ onSaveRecord }: EmergencyScoreSheetProps) 
         </span>
         <button
           className="scorebar__toggle"
-          onClick={() => setScorebarCollapsed((c) => !c)}
+          onClick={() => {
+            const next = !scorebarCollapsedRef.current;
+            scorebarCollapsedRef.current = next;
+            setScorebarCollapsed(next);
+          }}
           aria-label={scorebarCollapsed ? '展開統計列' : '收折統計列'}
         >
           {scorebarCollapsed ? '▴' : '▾'}
