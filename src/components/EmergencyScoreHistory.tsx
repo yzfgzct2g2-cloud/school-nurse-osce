@@ -4,10 +4,22 @@
 import { useState } from 'react';
 import type { ScoreRecord } from '../types/emergencyScoring';
 
-export const APP_VERSION = 'v1.1.0';
+export const APP_VERSION = 'v1.1.1';
 export const APP_UPDATE = '2026-06-19';
 
 const VERSION_HISTORY = [
+  {
+    version: 'v1.1.1',
+    date: '2026-06-19',
+    changes: [
+      '取消自動收折工具列，改為手動縮小／展開',
+      '修正滑動到頁面底部時工具列反覆展開與收合問題',
+      '工具列縮小狀態顯示情境名稱與計時器',
+      '統計列展開顯示完整項目，縮小顯示關鍵資訊',
+      '展開／縮小狀態儲存至 localStorage，重整後保留',
+      '優化手機版評核空間',
+    ],
+  },
   {
     version: 'v1.1.0',
     date: '2026-06-19',
