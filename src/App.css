@@ -828,3 +828,368 @@
 @media (prefers-reduced-motion: reduce) {
   .timer--warning { animation: none; }
 }
+
+/* ============================================================
+   V1.2.0 — 測驗模式樣式
+   ============================================================ */
+
+/* ===== 測驗設定頁 ===== */
+.exam-setup {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.exam-setup__header { text-align: center; }
+.exam-setup__title  { font-size: 22px; font-weight: 700; color: var(--pine); margin: 0 0 4px; }
+.exam-setup__sub    { font-size: 14px; color: var(--muted); margin: 0; }
+
+.setup-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.setup-card__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--pine);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.setup-card__hint    { font-size: 12px; font-weight: 400; color: var(--muted); }
+.setup-card__refresh { margin-left: auto; }
+
+.setup-modes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.setup-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  background: var(--surface);
+  transition: border-color .15s, background .15s;
+  input { display: none; }
+}
+.setup-mode-btn:hover           { border-color: var(--pine-soft); }
+.setup-mode-btn--active         { border-color: var(--pine); background: var(--pine-soft); color: var(--pine); font-weight: 600; }
+
+.setup-submode        { padding-top: 4px; display: flex; flex-direction: column; gap: 8px; }
+.setup-submode__options { display: flex; flex-direction: column; gap: 6px; }
+.setup-submode-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  background: var(--surface);
+  transition: border-color .15s, background .15s;
+  input { display: none; }
+}
+.setup-submode-btn--active { border-color: var(--pine); background: var(--pine-soft); color: var(--pine); font-weight: 600; }
+
+.setup-label { font-size: 13px; color: var(--muted); }
+
+.setup-station-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.setup-select {
+  flex: 1;
+  min-width: 180px;
+  height: 36px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: var(--bg);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.setup-preview { display: flex; flex-direction: column; gap: 8px; }
+.setup-preview__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--bg);
+}
+.setup-preview__label { font-size: 12px; color: var(--muted); min-width: 44px; }
+.setup-preview__cat   { font-size: 12px; padding: 2px 8px; border-radius: 4px; background: var(--pine-soft); color: var(--pine); }
+.setup-preview__name  { font-size: 14px; color: var(--ink); font-weight: 600; }
+
+.setup-timer-modes { display: flex; flex-direction: column; gap: 6px; }
+.setup-duration {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--bg);
+}
+.setup-duration__presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.setup-duration__custom  { display: flex; align-items: center; gap: 8px; }
+.btn--preset-active { background: var(--pine); color: #fff; }
+
+.exam-setup__actions { display: flex; justify-content: center; padding-top: 8px; }
+.exam-setup__start {
+  padding: 0 40px;
+  height: 44px;
+  font-size: 16px;
+  background: var(--pine);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: background .15s;
+}
+.exam-setup__start:hover { background: var(--pine-dark); }
+
+/* ===== 測驗執行器 ===== */
+.exam-runner { display: flex; flex-direction: column; min-height: calc(100vh - var(--nav-h)); }
+
+.exam-header {
+  position: sticky;
+  top: var(--nav-h);
+  z-index: 30;
+  background: var(--pine);
+  color: #fff;
+  padding: 10px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+}
+.exam-header__info   { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex: 1; }
+.exam-header__mode   { font-weight: 700; font-size: 14px; }
+.exam-header__divider{ opacity: .5; }
+.exam-header__station{ font-size: 13px; opacity: .9; }
+.exam-header__cat    { font-size: 12px; padding: 2px 8px; background: rgba(255,255,255,.15); border-radius: 4px; }
+.exam-header__name   { font-size: 14px; font-weight: 600; }
+
+.exam-header__timer { display: flex; align-items: center; gap: 8px; }
+.exam-header__timer-label { font-size: 12px; opacity: .8; }
+.exam-timer { font-family: monospace; font-size: 20px; font-weight: 700; letter-spacing: .05em; }
+.exam-timer--warn { color: #ffd600; }
+.exam-timer--done { color: #aaa; }
+
+.exam-header__nav   { display: flex; align-items: center; gap: 6px; }
+.exam-header__abort { opacity: .7; font-size: 12px !important; }
+
+.exam-station-notice {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+.exam-station-notice--locked { background: var(--c-sub-bg); color: var(--c-sub); }
+
+/* 即時統計列 */
+.exam-scorebar {
+  position: sticky;
+  top: calc(var(--nav-h) + 66px);
+  z-index: 20;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+}
+.exam-station-tabs { display: flex; gap: 4px; margin-left: auto; }
+.exam-station-tab {
+  min-width: 32px;
+  height: 28px;
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+.exam-station-tab--active { border-color: var(--pine); background: var(--pine-soft); color: var(--pine); font-weight: 700; }
+.exam-station-tab--done   { border-color: var(--c-standard); color: var(--c-standard); }
+
+/* grade-badge（用於 ExamRunner / ExamResults） */
+.grade-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 700; }
+.grade-badge--精熟   { background: var(--c-standard-bg); color: var(--c-standard); }
+.grade-badge--普通   { background: var(--c-sub-bg); color: var(--c-sub); }
+.grade-badge--不精熟 { background: var(--c-error-bg); color: var(--c-error); }
+.grade-badge--完全不熟 { background: #5a0000; color: #fff; }
+
+.pass-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; background: var(--c-standard-bg); color: var(--c-standard); font-size: 13px; font-weight: 700; }
+.fail-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; background: var(--c-error-bg); color: var(--c-error); font-size: 13px; font-weight: 700; }
+.pass-badge--lg, .fail-badge--lg { font-size: 16px; padding: 4px 16px; }
+
+.text--warn { color: var(--c-error); }
+
+/* btn 補充 */
+.btn--primary  { background: var(--pine); color: #fff; border-color: var(--pine); }
+.btn--primary:hover { background: var(--pine-dark); }
+.btn--danger   { background: var(--c-error); color: #fff; border-color: var(--c-error); }
+.btn--start    { background: var(--pine); color: #fff; height: 32px; padding: 0 14px; font-size: 14px; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; }
+.btn--next     { background: var(--pine); color: #fff; }
+
+/* ===== 測驗結果頁 ===== */
+.exam-results {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.exam-results__header    { text-align: center; }
+.exam-results__title     { font-size: 22px; font-weight: 700; color: var(--pine); margin: 0 0 4px; }
+.exam-results__meta      { font-size: 13px; color: var(--muted); display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.exam-results__sep       { opacity: .4; }
+.exam-results__section-title { font-size: 16px; font-weight: 700; color: var(--pine); margin: 0; }
+
+.exam-results__overall {
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow);
+}
+.exam-results__overall--pass { background: var(--c-standard-bg); }
+.exam-results__overall--fail { background: var(--c-error-bg); }
+.exam-results__overall-label { font-size: 14px; font-weight: 700; color: var(--muted); }
+.exam-results__overall-grade { display: flex; align-items: center; gap: 12px; }
+.exam-results__overall-stats {
+  display: flex; flex-wrap: wrap; gap: 16px;
+}
+.overall-stat { display: flex; flex-direction: column; gap: 2px; }
+.overall-stat__label { font-size: 12px; color: var(--muted); }
+.overall-stat__value { font-size: 20px; font-weight: 700; color: var(--ink); }
+
+.exam-results__stations { display: flex; flex-direction: column; gap: 12px; }
+.station-result {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.station-result--incomplete { opacity: .7; }
+.station-result__head {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.station-result__num  { font-weight: 700; color: var(--pine); font-size: 14px; min-width: 44px; }
+.station-result__cat  { font-size: 12px; padding: 2px 8px; background: var(--pine-soft); color: var(--pine); border-radius: 4px; }
+.station-result__name { font-size: 15px; font-weight: 600; color: var(--ink); flex: 1; }
+.station-result__incomplete-badge { font-size: 12px; background: var(--c-sub-bg); color: var(--c-sub); padding: 2px 8px; border-radius: 4px; }
+.station-result__stats {
+  display: flex; flex-wrap: wrap; gap: 10px; font-size: 13px; color: var(--muted);
+}
+.station-stat { display: flex; gap: 4px; align-items: center; }
+.station-stat strong { color: var(--ink); }
+
+.exam-results__actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* exam runner error */
+.exam-runner__error { padding: 40px; text-align: center; color: var(--c-error); }
+
+/* ===== 成績紀錄 — 分頁 ===== */
+.history__tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.history-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.history-tab--active { color: var(--pine); font-weight: 700; border-color: var(--pine); }
+
+/* 測驗紀錄列表 */
+.history__exam-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 14px; }
+.exam-record {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-left: 4px solid transparent;
+}
+.exam-record--pass { border-color: var(--c-standard); }
+.exam-record--fail { border-color: var(--c-error); }
+
+.exam-record__head {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.exam-record__datetime { font-size: 13px; color: var(--muted); min-width: 130px; }
+.exam-record__mode     { font-size: 13px; color: var(--ink); flex: 1; }
+.exam-record__grade    { display: flex; gap: 6px; align-items: center; }
+.exam-record__del      { margin-left: auto; }
+
+.exam-record__summary {
+  display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted);
+}
+.exam-record__stations { display: flex; flex-direction: column; gap: 4px; }
+.exam-station-chip {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 13px;
+}
+.exam-station-chip__num  { color: var(--pine); font-weight: 700; min-width: 32px; }
+.exam-station-chip__name { flex: 1; font-weight: 600; color: var(--ink); }
+
+.grade-tag { padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; background: var(--pine-soft); color: var(--pine); }
+.grade-tag--精熟    { background: var(--c-standard-bg); color: var(--c-standard); }
+.grade-tag--普通    { background: var(--c-sub-bg); color: var(--c-sub); }
+.grade-tag--不精熟  { background: var(--c-error-bg); color: var(--c-error); }
+.grade-tag--完全不熟 { background: #5a0000; color: #fff; }
+
+/* ===== RWD — 測驗模式 ===== */
+@media (max-width: 640px) {
+  .exam-header { padding: 8px 10px; gap: 8px; }
+  .exam-header__name { font-size: 13px; }
+  .exam-timer { font-size: 17px; }
+  .exam-scorebar { padding: 6px 10px; font-size: 12px; gap: 8px; }
+  .exam-results { padding: 14px 10px 32px; }
+  .exam-setup { padding: 12px 10px 32px; }
+  .setup-mode-btn { padding: 6px 10px; font-size: 13px; }
+}

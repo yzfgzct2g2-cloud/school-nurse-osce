@@ -86,6 +86,11 @@ export function isPassing(grade: Grade): boolean {
   return SCORING_CONFIG.passingGrades.includes(grade);
 }
 
+/** 對外暴露整體分級函式（供多站綜合計分使用） */
+export function computeGrade(completionRate: number, criticalMissCount: number): Grade {
+  return gradeOverall(completionRate, criticalMissCount);
+}
+
 /**
  * 核心計分：依情境與作答狀態，計算整份評分表的彙總結果。
  * 未填狀態的步驟一律視為「未操作」。
