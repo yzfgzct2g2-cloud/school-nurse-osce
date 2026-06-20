@@ -1,8 +1,10 @@
 // ============================================================
-// 校護緊急救護情境評分表 - 情境資料 v1.1.0
+// 校護緊急救護情境評分表 - 情境資料 v1.2.0
 // ------------------------------------------------------------
 // 結構：通用流程 + 特殊處置（順序：輔助檢查→特殊→SAMPLE→後續）
+//        外科情境的「初步評估」一律改為 XABCDE 創傷初步評估
 //        CPR / 異物梗塞 使用 customSections 完全獨立流程
+//        特殊處置可為單一大項，或多個大項陣列（如斷肢傷含止血帶 / 斷肢保存）
 // ============================================================
 import type { Category, Scenario, ScenarioSection, ScenarioStep } from '../types/emergencyScoring';
 
@@ -100,14 +102,83 @@ function buildCommonSections(category: Category): ScenarioSection[] {
 }
 
 // ------------------------------------------------------------
+// XABCDE 創傷初步評估（所有外科情境共用，取代一般「初步評估」）
+//   X：Massive Hemorrhage 大量出血控制
+//   A：Airway 呼吸道（含頸椎保護）
+//   B：Breathing 呼吸
+//   C：Circulation 循環
+//   D：Disability 失能
+//   E：Exposure 暴露
+// ------------------------------------------------------------
+function xabcdeSection(): ScenarioSection {
+  return section('x-trauma', '創傷初步評估 XABCDE', [
+    // X — 大量出血控制（全數重大缺失）
+    { text: 'X｜確認大量出血', critical: true },
+    { text: 'X｜直接加壓止血', critical: true },
+    { text: 'X｜必要時止血帶', critical: true },
+    { text: 'X｜記錄止血帶時間', critical: true },
+    { text: 'X｜評估休克徵象', critical: true },
+    // A — 呼吸道（含頸椎保護）
+    { text: 'A｜呼吸道是否通暢', critical: true },
+    'A｜頸椎保護',
+    { text: 'A｜頸椎限移', critical: true },
+    // B — 呼吸
+    'B｜呼吸頻率',
+    'B｜胸廓起伏',
+    'B｜呼吸音',
+    // C — 循環
+    'C｜橈動脈',
+    'C｜膚色',
+    'C｜濕冷',
+    'C｜微血管回填',
+    // D — 失能
+    'D｜AVPU',
+    'D｜GCS',
+    'D｜瞳孔',
+    // E — 暴露
+    'E｜頭頸胸腹骨盆四肢',
+    'E｜保暖',
+    'E｜隱私',
+  ]);
+}
+
+// ------------------------------------------------------------
+// 止血帶流程（獨立評分大項）
+// ------------------------------------------------------------
+function tourniquetSection(): ScenarioSection {
+  return section('sp-tourniquet', '止血帶流程', [
+    '傷口近心端 5～7 公分',
+    '避開關節',
+    { text: '拉緊至出血停止', critical: true },
+    '固定止血帶',
+    { text: '標記時間', critical: true },
+    '持續監測生命徵象',
+  ], true);
+}
+
+// ------------------------------------------------------------
+// 斷肢保存流程（獨立評分大項）
+// ------------------------------------------------------------
+function amputationPreserveSection(): ScenarioSection {
+  return section('sp-amp-preserve', '斷肢保存流程', [
+    '濕紗布包覆',
+    '放入塑膠袋',
+    '密封',
+    '放入冰水容器',
+    { text: '不直接接觸冰塊', critical: true },
+    '隨患者送醫',
+  ], true);
+}
+
+// ------------------------------------------------------------
 // 情境定義表
 // ------------------------------------------------------------
 interface ScenarioDef {
   id: string;
   category: Category;
   name: string;
-  /** 標準情境：特殊大項（插在 輔助檢查 之後） */
-  special?: ScenarioSection;
+  /** 標準情境：特殊大項（插在 輔助檢查 之後）；可為單一或多個大項 */
+  special?: ScenarioSection | ScenarioSection[];
   /** 完全自訂流程（CPR / 異物梗塞） */
   customSections?: ScenarioSection[];
 }
@@ -333,19 +404,69 @@ const scenarioDefs: ScenarioDef[] = [
     ], true),
   },
   {
+    id: 'surg-head-injury',
+    category: '外科',
+    name: '頭部外傷',
+    special: section('sp-head', '頭部外傷特殊處置', [
+      '評估受傷機轉',
+      { text: '評估 AVPU（意識）', critical: true },
+      { text: '評估 GCS（意識）', critical: true },
+      { text: '評估瞳孔', critical: true },
+      '評估頭痛',
+      '評估頭暈',
+      '評估噁心',
+      '評估嘔吐',
+      '評估失憶',
+      '評估抽搐',
+      '評估耳鼻出血或流液',
+      { text: '傷口止血', critical: true },
+      '通知家長',
+      { text: '疑似腦傷必要時 119 送醫', critical: true },
+    ], true),
+  },
+  {
+    id: 'surg-palm-laceration',
+    category: '外科',
+    name: '手掌割傷',
+    special: section('sp-palm', '手掌割傷特殊處置', [
+      { text: '戴手套', critical: true },
+      '評估出血量',
+      { text: '加壓止血', critical: true },
+      '抬高患肢',
+      '評估傷口深度',
+      '評估異物',
+      { text: '評估手指活動（運動功能）', critical: true },
+      { text: '評估感覺功能', critical: true },
+      '包紮',
+      '通知家長',
+      '必要時送醫',
+    ], true),
+  },
+  {
+    id: 'surg-amputation',
+    category: '外科',
+    name: '斷肢傷',
+    special: [
+      section('sp-amp', '斷肢傷特殊處置（大量出血）', [
+        { text: '確認大量出血', critical: true },
+        { text: '直接加壓止血', critical: true },
+        { text: '使用止血帶', critical: true },
+        { text: '記錄時間', critical: true },
+        '評估休克',
+        { text: '啟動 119', critical: true },
+        '保暖',
+        { text: '保存斷肢', critical: true },
+        '通知家長',
+      ], true),
+      tourniquetSection(),
+      amputationPreserveSection(),
+    ],
+  },
+  {
     id: 'surg-other-trauma',
     category: '外科',
     name: '其他外傷',
-    special: section('sp-other', '其他外傷（外科通用 XABCDE）', [
-      { text: 'X 大出血', critical: true },
-      { text: 'C 頸椎限移', critical: true },
-      'C 意識',
-      'A 呼吸道',
-      'B 呼吸',
-      'C 循環',
-      'D 失能',
-      'E 暴露與保暖',
-    ], true),
+    // 初步評估已統一改為 XABCDE，其他外傷不再額外重複，沿用通用外科流程
   },
 ];
 
@@ -357,12 +478,20 @@ function buildScenario(def: ScenarioDef): Scenario {
     sections = def.customSections;
   } else {
     const common = buildCommonSections(def.category);
-    if (def.special) {
-      // 特殊處置插在 index 7（輔助檢查之後、SAMPLE 之前）
-      sections = [...common.slice(0, 7), def.special, ...common.slice(7)];
-    } else {
-      sections = common;
+
+    // 外科：將一般「初步評估」替換為 XABCDE 創傷初步評估
+    if (def.category === '外科') {
+      const primaryIdx = common.findIndex((s) => s.id === 'c06-primary');
+      if (primaryIdx !== -1) common[primaryIdx] = xabcdeSection();
     }
+
+    // 特殊處置（可為單一或多個）插在 index 7（輔助檢查之後、SAMPLE 之前）
+    const specials = def.special
+      ? Array.isArray(def.special)
+        ? def.special
+        : [def.special]
+      : [];
+    sections = [...common.slice(0, 7), ...specials, ...common.slice(7)];
   }
 
   return { id: def.id, category: def.category, name: def.name, sections };
